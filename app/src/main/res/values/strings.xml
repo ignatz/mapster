@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Mapster</string>
+    <string name="mapbox_access_token">pk.eyJ1IjoiamVsdHNjaCIsImEiOiJjbDNjMHNwc3YwN20yM2NtbXFkYjM2ajZqIn0._TVaw2nBCZkc59KSrwdLUg</string>
+</resources>
