@@ -12,36 +12,15 @@ import java.io.IOException
 fun getTrack(parser: XmlResourceParser): List<Point> {
     var result = emptyList<Point>()
 
-    parser.require(XmlResourceParser.START_TAG, null, "gpx")
-    while (parser.next() != XmlResourceParser.END_TAG) {
-        if (parser.eventType != XmlResourceParser.START_TAG) {
-            continue
-        }
+    forChild(parser, "gpx", "trk") { result = readTrk(parser) }
 
-        if (parser.name == "trk") {
-            result = readTrk(parser)
-        } else {
-            skip(parser)
-        }
-    }
     return result
 }
 
 private fun readTrk(parser: XmlResourceParser): List<Point> {
     val result = mutableListOf<Point>()
 
-    parser.require(XmlResourceParser.START_TAG, null, "trk")
-    while (parser.next() != XmlResourceParser.END_TAG) {
-        if (parser.eventType != XmlResourceParser.START_TAG) {
-            continue
-        }
-
-        if (parser.name == "trkseg") {
-            result.addAll(readTrkSeg(parser))
-        } else {
-            skip(parser)
-        }
-    }
+    forChild(parser, "trk", "trkseg") { result.addAll(readTrkSeg(parser)) }
 
     return result
 }
@@ -49,18 +28,7 @@ private fun readTrk(parser: XmlResourceParser): List<Point> {
 private fun readTrkSeg(parser: XmlResourceParser): List<Point> {
     val result = mutableListOf<Point>()
 
-    parser.require(XmlResourceParser.START_TAG, null, "trkseg")
-    while (parser.next() != XmlResourceParser.END_TAG) {
-        if (parser.eventType != XmlResourceParser.START_TAG) {
-            continue
-        }
-
-        if (parser.name == "trkpt") {
-            result.add(readTrkPt(parser))
-        } else {
-            skip(parser)
-        }
-    }
+    forChild(parser, "trkseg", "trkpt") { result.add(readTrkPt(parser)) }
 
     return result
 }
@@ -74,6 +42,32 @@ private fun readTrkPt(parser: XmlResourceParser): Point {
     while (parser.next() != XmlResourceParser.END_TAG || parser.name != "trkpt");
 
     return Point.fromLngLat(lon.toDouble(), lat.toDouble())
+}
+
+/**
+ * Processes a child tag.
+ *
+ * Asserts that the parser has reached the specified {@code parentTagName} and then applies the
+ * given {@code processor} to each of its children matching {@code childTagName}.
+ */
+private fun forChild(
+    parser: XmlResourceParser,
+    parentTagName: String,
+    childTagName: String,
+    processor: () -> Unit
+) {
+    parser.require(XmlResourceParser.START_TAG, null, parentTagName)
+    while (parser.next() != XmlResourceParser.END_TAG) {
+        if (parser.eventType != XmlResourceParser.START_TAG) {
+            continue
+        }
+
+        if (parser.name == childTagName) {
+            processor()
+        } else {
+            skip(parser)
+        }
+    }
 }
 
 @Throws(XmlPullParserException::class, IOException::class)
